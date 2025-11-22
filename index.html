@@ -1,0 +1,689 @@
+<html lang="en" class="scroll-smooth"><head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NeuralGrid - AI Inference Infrastructure</title>
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700;800&amp;family=Space+Mono:wght@400;700&amp;display=swap" rel="stylesheet">
+    
+    <!-- Tailwind Script -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Manrope', 'sans-serif'],
+                        mono: ['Space Mono', 'monospace'],
+                    },
+                    colors: {
+                        zinc: {
+                            850: '#1f1f23',
+                            900: '#18181b',
+                            950: '#09090b',
+                        },
+                        blue: {
+                            500: '#3b82f6',
+                            600: '#2563eb',
+                        }
+                    },
+                    animation: {
+                        'marquee': 'marquee 40s linear infinite',
+                        'hero-slide': 'heroSlide 1.5s ease-in 2 alternate forwards',
+                        'blob': 'blob 7s infinite',
+                    },
+                    keyframes: {
+                        blob: {
+                            '0%': { transform: 'translate(0px, 0px) scale(1)' },
+                            '33%': { transform: 'translate(30px, -50px) scale(1.1)' },
+                            '66%': { transform: 'translate(-20px, 20px) scale(0.9)' },
+                            '100%': { transform: 'translate(0px, 0px) scale(1)' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <style>
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #18181b;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #3f3f46;
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #52525b;
+        }
+
+        /* Glass Utilities */
+        .glass {
+            background: rgba(24, 24, 27, 0.6);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        
+        .glass-card {
+            background: linear-gradient(180deg, rgba(39, 39, 42, 0.3) 0%, rgba(24, 24, 27, 0.3) 100%);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.03);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+
+        /* Animations */
+        @keyframes marquee {
+            0% { transform: translateX(0%); }
+            100% { transform: translateX(-100%); }
+        }
+
+        @keyframes heroSlide {
+            0% { transform: translateY(30px); opacity: 0.5; }
+            100% { transform: translateY(0); opacity: 1; }
+        }
+
+        /* Reveal Animation Classes */
+        .reveal {
+            opacity: 0;
+            transform: translateY(30px);
+            filter: blur(5px);
+            transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .reveal.active {
+            opacity: 1;
+            transform: translateY(0);
+            filter: blur(0);
+        }
+        
+        /* Staggered Delays */
+        .delay-100 { transition-delay: 100ms; }
+        .delay-200 { transition-delay: 200ms; }
+        .delay-300 { transition-delay: 300ms; }
+        
+        /* Custom Toggle */
+        .toggle-checkbox:checked {
+            right: 0;
+            border-color: #3b82f6;
+        }
+        .toggle-checkbox:checked + .toggle-label {
+            background-color: #3b82f6;
+        }
+    </style>
+</head>
+<body class="bg-zinc-900 text-zinc-300 font-sans antialiased overflow-x-hidden selection:bg-blue-500/30 selection:text-blue-200">
+
+    <!-- Navigation -->
+    <nav class="fixed glass w-full z-50 border-white/5 border-b top-0">
+        <div class="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+            <div class="flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" data-lucide="cpu" class="lucide lucide-cpu w-5 h-5 text-blue-500"><path d="M12 20v2"></path><path d="M12 2v2"></path><path d="M17 20v2"></path><path d="M17 2v2"></path><path d="M2 12h2"></path><path d="M2 17h2"></path><path d="M2 7h2"></path><path d="M20 12h2"></path><path d="M20 17h2"></path><path d="M20 7h2"></path><path d="M7 20v2"></path><path d="M7 2v2"></path><rect x="4" y="4" width="16" height="16" rx="2"></rect><rect x="8" y="8" width="8" height="8" rx="1"></rect></svg>
+                <span class="font-mono font-medium tracking-tight text-white text-lg">NEURALGRID</span>
+            </div>
+            <div class="hidden md:flex items-center gap-8 text-sm font-medium text-zinc-400">
+                <a href="#features" class="hover:text-white transition-colors">Capabilities</a>
+                <a href="#data" class="hover:text-white transition-colors">Data</a>
+                <a href="#pricing" class="hover:text-white transition-colors">Pricing</a>
+            </div>
+            <div class="flex items-center gap-4">
+                <a href="#" class="text-xs font-mono text-zinc-400 hover:text-white transition-colors hidden sm:block">DOCS</a>
+                <button class="bg-zinc-100 text-zinc-900 px-4 py-2 text-xs font-mono font-medium hover:bg-white transition-colors">
+                    TERMINAL &gt;
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="min-h-screen flex flex-col overflow-hidden pt-32 pb-20 relative justify-center" id="hero">
+        <!-- Background Gradients -->
+        <div class="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full max-w-7xl pointer-events-none">
+            <div class="absolute top-20 left-1/4 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl mix-blend-screen animate-blob"></div>
+            <div class="absolute top-40 right-1/4 w-64 h-64 bg-indigo-500/10 rounded-full blur-3xl mix-blend-screen animate-blob animation-delay-2000"></div>
+        </div>
+
+        <div class="max-w-7xl mx-auto px-6 w-full relative z-10">
+            <div class="flex flex-col items-center text-center mb-16 animate-hero-slide">
+                <div class="inline-flex gap-2 text-xs text-blue-400 font-mono bg-blue-500/5 border-blue-500/20 border rounded-full mb-8 pt-1 pr-3 pb-1 pl-3 gap-x-2 gap-y-2 items-center">v2.4 IS LIVE: ZERO-KNOWLEDGE INFERENCE<span class="relative flex h-2 w-2">
+                      <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
+                      <span class="relative inline-flex rounded-full h-2 w-2 bg-blue-500"></span>
+                    </span></div>
+                
+                <h1 class="md:text-6xl lg:text-7xl leading-tight text-5xl font-medium text-white tracking-tight font-mono max-w-4xl mb-6">
+                    INTELLIGENT
+                    <span class="text-zinc-500">PROCESSING NODE</span>
+                </h1>
+                
+                <p class="text-xl md:text-2xl text-zinc-400 max-w-2xl font-light leading-relaxed mb-10">
+                    Orchestrate distributed reasoning chains with sub-millisecond latency. The infrastructure layer for the next generation of autonomous agents.
+                </p>
+
+                <div class="flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto">
+                    <button class="w-full sm:w-auto bg-blue-600 hover:bg-blue-500 text-white px-8 py-3.5 text-sm font-mono transition-all border border-transparent shadow-[0_0_20px_-5px_rgba(59,130,246,0.5)]">
+                        DEPLOY CLUSTER
+                    </button>
+                    <button class="w-full sm:w-auto bg-zinc-900 hover:bg-zinc-800 text-zinc-300 border border-zinc-700 px-8 py-3.5 text-sm font-mono transition-all flex items-center justify-center gap-2 group">
+                        <span>READ MANIFEST</span>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" data-lucide="arrow-right" class="lucide lucide-arrow-right w-4 h-4 group-hover:translate-x-1 transition-transform"><path d="M5 12h14"></path><path d="m12 5 7 7-7 7"></path></svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Hero Table Visual -->
+            <div class="w-full max-w-5xl mx-auto glass rounded-lg overflow-hidden shadow-2xl border border-zinc-800 reveal delay-200 active">
+                <div class="flex items-center justify-between px-4 py-3 border-b border-zinc-800 bg-zinc-900/80">
+                    <div class="flex items-center gap-2">
+                        <div class="w-3 h-3 rounded-full bg-red-500/20 border border-red-500/50"></div>
+                        <div class="w-3 h-3 rounded-full bg-yellow-500/20 border border-yellow-500/50"></div>
+                        <div class="w-3 h-3 rounded-full bg-green-500/20 border border-green-500/50"></div>
+                    </div>
+                    <div class="text-xs font-mono text-zinc-500">live_inference_stream.log</div>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="border-b border-zinc-800 bg-zinc-900/50 text-xs font-mono uppercase text-zinc-500 tracking-wider">
+                                <th class="px-6 py-4 font-medium">Request ID</th>
+                                <th class="px-6 py-4 font-medium">Model Type</th>
+                                <th class="px-6 py-4 font-medium">Tokens</th>
+                                <th class="px-6 py-4 font-medium">Latency</th>
+                                <th class="px-6 py-4 font-medium">Throughput</th>
+                                <th class="px-6 py-4 font-medium text-right">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody class="text-sm font-mono text-zinc-300 divide-y divide-zinc-800/50">
+                            <tr class="hover:bg-blue-500/5 transition-colors group cursor-default">
+                                <td class="px-6 py-3 text-zinc-500 group-hover:text-blue-400">req_8x92m</td>
+                                <td class="px-6 py-3">Llama-3-70b</td>
+                                <td class="px-6 py-3 text-zinc-400">4,096</td>
+                                <td class="px-6 py-3 text-blue-400">12ms</td>
+                                <td class="px-6 py-3">180 t/s</td>
+                                <td class="px-6 py-3 text-right"><span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">COMPLETE</span></td>
+                            </tr>
+                            <tr class="hover:bg-blue-500/5 transition-colors group cursor-default">
+                                <td class="px-6 py-3 text-zinc-500 group-hover:text-blue-400">req_7b21k</td>
+                                <td class="px-6 py-3">Mistral-Large</td>
+                                <td class="px-6 py-3 text-zinc-400">1,024</td>
+                                <td class="px-6 py-3 text-blue-400">8ms</td>
+                                <td class="px-6 py-3">240 t/s</td>
+                                <td class="px-6 py-3 text-right"><span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">COMPLETE</span></td>
+                            </tr>
+                            <tr class="hover:bg-blue-500/5 transition-colors group cursor-default">
+                                <td class="px-6 py-3 text-zinc-500 group-hover:text-blue-400">req_3m99p</td>
+                                <td class="px-6 py-3">GPT-4-Turbo</td>
+                                <td class="px-6 py-3 text-zinc-400">128k</td>
+                                <td class="px-6 py-3 text-blue-400">45ms</td>
+                                <td class="px-6 py-3">90 t/s</td>
+                                <td class="px-6 py-3 text-right"><span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] bg-blue-500/10 text-blue-400 border border-blue-500/20 animate-pulse">PROCESSING</span></td>
+                            </tr>
+                             <tr class="hover:bg-blue-500/5 transition-colors group cursor-default">
+                                <td class="px-6 py-3 text-zinc-500 group-hover:text-blue-400">req_9x12a</td>
+                                <td class="px-6 py-3">Claude-3-Opus</td>
+                                <td class="px-6 py-3 text-zinc-400">32k</td>
+                                <td class="px-6 py-3 text-blue-400">32ms</td>
+                                <td class="px-6 py-3">110 t/s</td>
+                                <td class="px-6 py-3 text-right"><span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] bg-zinc-800 text-zinc-400 border border-zinc-700">QUEUED</span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="bg-zinc-900/80 border-t border-zinc-800 px-4 py-2 flex justify-between items-center">
+                    <div class="flex gap-4 text-[10px] font-mono text-zinc-500">
+                        <span>CPU: 12%</span>
+                        <span>MEM: 4.2GB</span>
+                        <span>NET: 1.2GB/s</span>
+                    </div>
+                    <div class="flex gap-1">
+                        <div class="w-1 h-1 bg-zinc-600 rounded-full"></div>
+                        <div class="w-1 h-1 bg-zinc-600 rounded-full"></div>
+                        <div class="w-1 h-1 bg-zinc-600 rounded-full"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Marquee Logos -->
+    <section class="border-y overflow-hidden bg-black/20 border-white/5 pt-10 pb-10">
+        <div class="flex w-full whitespace-nowrap">
+            <div class="flex min-w-full animate-marquee items-center">
+                <!-- Logo Set 1 -->
+                <div class="flex items-center gap-16 px-8">
+                    <span class="text-lg font-mono font-bold text-zinc-600 tracking-tight">ACME_CORP</span>
+                    <span class="text-lg font-mono font-bold text-zinc-600 tracking-tight">STRATOS</span>
+                    <span class="text-lg font-mono font-bold text-zinc-600 tracking-tight">HYPER_AI</span>
+                    <span class="text-lg font-bold text-zinc-600 tracking-tight font-mono">NEXUS_LABS</span>
+                    <span class="text-lg font-bold text-zinc-600 tracking-tight font-mono">QUANTUM_V</span>
+                    <span class="text-lg font-mono font-bold text-zinc-600 tracking-tight">SYNTH_OS</span>
+                </div>
+                <!-- Duplicated Set -->
+                <div class="flex items-center gap-16 px-8">
+                    <span class="text-lg font-mono font-bold text-zinc-600 tracking-tight">ACME_CORP</span>
+                    <span class="text-lg font-mono font-bold text-zinc-600 tracking-tight">STRATOS</span>
+                    <span class="text-lg font-mono font-bold text-zinc-600 tracking-tight">HYPER_AI</span>
+                    <span class="text-lg font-mono font-bold text-zinc-600 tracking-tight">NEXUS_LABS</span>
+                    <span class="text-lg font-mono font-bold text-zinc-600 tracking-tight">QUANTUM_V</span>
+                    <span class="text-lg font-mono font-bold text-zinc-600 tracking-tight">SYNTH_OS</span>
+                </div>
+                 <!-- Duplicated Set 2 for safety on wide screens -->
+                 <div class="flex items-center gap-16 px-8">
+                    <span class="text-lg font-mono font-bold text-zinc-600 tracking-tight">ACME_CORP</span>
+                    <span class="text-lg font-mono font-bold text-zinc-600 tracking-tight">STRATOS</span>
+                    <span class="text-lg font-mono font-bold text-zinc-600 tracking-tight">HYPER_AI</span>
+                    <span class="text-lg font-mono font-bold text-zinc-600 tracking-tight">NEXUS_LABS</span>
+                    <span class="text-lg font-mono font-bold text-zinc-600 tracking-tight">QUANTUM_V</span>
+                    <span class="text-lg font-mono font-bold text-zinc-600 tracking-tight">SYNTH_OS</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Grid -->
+    <section id="features" class="py-32 relative">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="reveal mb-20">
+                <h2 class="text-3xl md:text-5xl font-mono font-medium tracking-tight text-white mb-4">CORE ARCHITECTURE</h2>
+                <p class="text-lg text-zinc-400 max-w-xl">Built for the rigorous demands of production-grade AI workloads.</p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Feature 1 -->
+                <div class="glass-card p-8 rounded-xl hover:border-blue-500/30 transition-colors group reveal delay-100">
+                    <div class="w-10 h-10 rounded bg-zinc-800 border border-zinc-700 flex items-center justify-center mb-6 group-hover:bg-blue-500/10 group-hover:border-blue-500/20 transition-colors">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" data-lucide="zap" class="lucide lucide-zap text-zinc-300 group-hover:text-blue-400 transition-colors"><path d="M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z"></path></svg>
+                    </div>
+                    <h3 class="font-mono text-lg text-white mb-3">Edge Caching</h3>
+                    <p class="text-sm text-zinc-400 leading-relaxed">Intelligent pre-fetching of model weights to edge nodes, reducing cold-start latency to near zero.</p>
+                </div>
+
+                <!-- Feature 2 -->
+                <div class="glass-card p-8 rounded-xl hover:border-blue-500/30 transition-colors group reveal delay-200">
+                    <div class="w-10 h-10 rounded bg-zinc-800 border border-zinc-700 flex items-center justify-center mb-6 group-hover:bg-blue-500/10 group-hover:border-blue-500/20 transition-colors">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" data-lucide="git-branch" class="lucide lucide-git-branch text-zinc-300 group-hover:text-blue-400 transition-colors"><line x1="6" x2="6" y1="3" y2="15"></line><circle cx="18" cy="6" r="3"></circle><circle cx="6" cy="18" r="3"></circle><path d="M18 9a9 9 0 0 1-9 9"></path></svg>
+                    </div>
+                    <h3 class="font-mono text-lg text-white mb-3">Vector Routing</h3>
+                    <p class="text-sm text-zinc-400 leading-relaxed">Dynamic request routing based on semantic complexity. Simple queries hit cheaper models instantly.</p>
+                </div>
+
+                <!-- Feature 3 -->
+                <div class="glass-card p-8 rounded-xl hover:border-blue-500/30 transition-colors group reveal delay-300">
+                    <div class="w-10 h-10 rounded bg-zinc-800 border border-zinc-700 flex items-center justify-center mb-6 group-hover:bg-blue-500/10 group-hover:border-blue-500/20 transition-colors">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" data-lucide="shield-check" class="lucide lucide-shield-check text-zinc-300 group-hover:text-blue-400 transition-colors"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"></path><path d="m9 12 2 2 4-4"></path></svg>
+                    </div>
+                    <h3 class="font-mono text-lg text-white mb-3">Guardrails API</h3>
+                    <p class="text-sm text-zinc-400 leading-relaxed">Deterministic output validation. Force JSON schemas and regex patterns at the logic gate level.</p>
+                </div>
+
+                <!-- Feature 4 -->
+                <div class="glass-card p-8 rounded-xl hover:border-blue-500/30 transition-colors group reveal">
+                    <div class="w-10 h-10 rounded bg-zinc-800 border border-zinc-700 flex items-center justify-center mb-6 group-hover:bg-blue-500/10 group-hover:border-blue-500/20 transition-colors">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" data-lucide="bar-chart-3" class="lucide lucide-bar-chart-3 text-zinc-300 group-hover:text-blue-400 transition-colors"><path d="M3 3v16a2 2 0 0 0 2 2h16"></path><path d="M18 17V9"></path><path d="M13 17V5"></path><path d="M8 17v-3"></path></svg>
+                    </div>
+                    <h3 class="font-mono text-lg text-white mb-3">Telemetry</h3>
+                    <p class="text-sm text-zinc-400 leading-relaxed">Real-time token usage analytics and drift detection integrated directly into your dashboard.</p>
+                </div>
+
+                <!-- Feature 5 -->
+                <div class="glass-card p-8 rounded-xl hover:border-blue-500/30 transition-colors group reveal delay-100">
+                    <div class="w-10 h-10 rounded bg-zinc-800 border border-zinc-700 flex items-center justify-center mb-6 group-hover:bg-blue-500/10 group-hover:border-blue-500/20 transition-colors">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" data-lucide="terminal" class="lucide lucide-terminal text-zinc-300 group-hover:text-blue-400 transition-colors"><path d="M12 19h8"></path><path d="m4 17 6-6-6-6"></path></svg>
+                    </div>
+                    <h3 class="font-mono text-lg text-white mb-3">CLI First</h3>
+                    <p class="text-sm text-zinc-400 leading-relaxed">Everything is controllable via our Rust-based CLI. Spin up clusters without leaving your terminal.</p>
+                </div>
+
+                <!-- Feature 6 -->
+                <div class="glass-card p-8 rounded-xl hover:border-blue-500/30 transition-colors group reveal delay-200">
+                    <div class="w-10 h-10 rounded bg-zinc-800 border border-zinc-700 flex items-center justify-center mb-6 group-hover:bg-blue-500/10 group-hover:border-blue-500/20 transition-colors">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" data-lucide="network" class="lucide lucide-network text-zinc-300 group-hover:text-blue-400 transition-colors"><rect x="16" y="16" width="6" height="6" rx="1"></rect><rect x="2" y="16" width="6" height="6" rx="1"></rect><rect x="9" y="2" width="6" height="6" rx="1"></rect><path d="M5 16v-3a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1v3"></path><path d="M12 12V8"></path></svg>
+                    </div>
+                    <h3 class="font-mono text-lg text-white mb-3">Private VPC</h3>
+                    <p class="text-sm text-zinc-400 leading-relaxed">Deploy dedicated instances within your own VPC peering connection for maximum security.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- New Testimonials Grid -->
+    <section class="py-24 bg-zinc-950 border-y border-zinc-800/50">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="mb-16 text-center reveal">
+                <h2 class="text-3xl md:text-4xl font-mono font-medium tracking-tight text-white mb-4">ENGINEERED FOR SCALE</h2>
+                <p class="text-zinc-400">See what high-throughput teams are building on NeuralGrid.</p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <!-- Review 1 -->
+                <div class="glass-card p-6 rounded-lg flex flex-col reveal delay-100 group hover:-translate-y-1 transition-transform duration-300">
+                    <div class="flex items-center gap-1 mb-4 text-blue-500">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="none"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="none"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="none"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="none"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="none"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+                    </div>
+                    <p class="text-sm text-zinc-300 font-light leading-relaxed mb-6 flex-1">
+                        "We moved our entire RAG pipeline to NeuralGrid. The semantic routing logic alone saved us 40% on inference costs in the first month. It's indistinguishable from magic."
+                    </p>
+                    <div class="flex items-center gap-3 border-t border-zinc-800/50 pt-4">
+                        <div class="w-8 h-8 bg-zinc-800 rounded-full flex items-center justify-center text-[10px] font-bold text-white font-mono">JS</div>
+                        <div>
+                            <div class="text-xs font-medium text-white">Jordan Smith</div>
+                            <div class="text-[10px] text-zinc-500 font-mono">CTO @ NEXUS_LABS</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Review 2 -->
+                <div class="glass-card p-6 rounded-lg flex flex-col reveal delay-200 group hover:-translate-y-1 transition-transform duration-300">
+                    <div class="flex items-center gap-1 mb-4 text-blue-500">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="none"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="none"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="none"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="none"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="none"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+                    </div>
+                    <p class="text-sm text-zinc-300 font-light leading-relaxed mb-6 flex-1">
+                        "The developer experience is unmatched. The CLI tool fits perfectly into our CI/CD pipeline, and the metrics dashboard actually gives actionable insights."
+                    </p>
+                    <div class="flex items-center gap-3 border-t border-zinc-800/50 pt-4">
+                        <div class="w-8 h-8 bg-zinc-800 rounded-full flex items-center justify-center text-[10px] font-bold text-white font-mono">AL</div>
+                        <div>
+                            <div class="text-xs font-medium text-white">Anna Li</div>
+                            <div class="text-[10px] text-zinc-500 font-mono">Lead AI Eng @ ACME</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Review 3 -->
+                <div class="glass-card p-6 rounded-lg flex flex-col reveal delay-300 group hover:-translate-y-1 transition-transform duration-300">
+                    <div class="flex items-center gap-1 mb-4 text-blue-500">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="none"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="none"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="none"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="none"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="none"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+                    </div>
+                    <p class="text-sm text-zinc-300 font-light leading-relaxed mb-6 flex-1">
+                        "Zero-latency inference is not a buzzword here. It's actually fast enough for real-time voice agents. We've cut our latency budget in half."
+                    </p>
+                    <div class="flex items-center gap-3 border-t border-zinc-800/50 pt-4">
+                        <div class="w-8 h-8 bg-zinc-800 rounded-full flex items-center justify-center text-[10px] font-bold text-white font-mono">MR</div>
+                        <div>
+                            <div class="text-xs font-medium text-white">Marcus Reed</div>
+                            <div class="text-[10px] text-zinc-500 font-mono">Founder @ SynthOS</div>
+                        </div>
+                    </div>
+                </div>
+                 <!-- Review 4 -->
+                 <div class="glass-card p-6 rounded-lg flex flex-col reveal delay-100 group hover:-translate-y-1 transition-transform duration-300">
+                    <div class="flex items-center gap-1 mb-4 text-blue-500">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="none"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="none"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="none"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="none"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="none"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+                    </div>
+                    <p class="text-sm text-zinc-300 font-light leading-relaxed mb-6 flex-1">
+                        "Finally an inference provider that treats security as a first-class citizen. The private VPC peering feature was seamless to set up."
+                    </p>
+                    <div class="flex items-center gap-3 border-t border-zinc-800/50 pt-4">
+                        <div class="w-8 h-8 bg-zinc-800 rounded-full flex items-center justify-center text-[10px] font-bold text-white font-mono">SK</div>
+                        <div>
+                            <div class="text-xs font-medium text-white">Sarah Kim</div>
+                            <div class="text-[10px] text-zinc-500 font-mono">DevOps Lead @ Stratos</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Review 5 -->
+                <div class="glass-card p-6 rounded-lg flex flex-col reveal delay-200 group hover:-translate-y-1 transition-transform duration-300">
+                    <div class="flex items-center gap-1 mb-4 text-blue-500">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="none"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="none"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="none"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="none"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="none"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+                    </div>
+                    <p class="text-sm text-zinc-300 font-light leading-relaxed mb-6 flex-1">
+                        "Scaling to zero actually works. We saved a fortune on idle GPU costs compared to our previous AWS setup."
+                    </p>
+                    <div class="flex items-center gap-3 border-t border-zinc-800/50 pt-4">
+                        <div class="w-8 h-8 bg-zinc-800 rounded-full flex items-center justify-center text-[10px] font-bold text-white font-mono">DT</div>
+                        <div>
+                            <div class="text-xs font-medium text-white">David Tan</div>
+                            <div class="text-[10px] text-zinc-500 font-mono">CTO @ Hyper_AI</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Review 6 -->
+                <div class="glass-card p-6 rounded-lg flex flex-col reveal delay-300 group hover:-translate-y-1 transition-transform duration-300">
+                    <div class="flex items-center gap-1 mb-4 text-blue-500">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="none"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="none"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="none"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="none"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="none"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+                    </div>
+                    <p class="text-sm text-zinc-300 font-light leading-relaxed mb-6 flex-1">
+                        "The documentation is beautiful. Everything just works. I deployed a fine-tuned Llama-3 model in under 15 minutes."
+                    </p>
+                    <div class="flex items-center gap-3 border-t border-zinc-800/50 pt-4">
+                        <div class="w-8 h-8 bg-zinc-800 rounded-full flex items-center justify-center text-[10px] font-bold text-white font-mono">EP</div>
+                        <div>
+                            <div class="text-xs font-medium text-white">Elena P.</div>
+                            <div class="text-[10px] text-zinc-500 font-mono">Engineer @ Quantum_V</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Pricing -->
+    <section id="pricing" class="py-32 relative">
+        <div class="max-w-7xl mx-auto px-6">
+             <div class="text-center mb-16 reveal">
+                <h2 class="text-3xl md:text-5xl font-mono font-medium tracking-tight text-white mb-4">TRANSPARENT PRICING</h2>
+                <p class="text-zinc-400">Pay only for the compute you consume. No seat limits.</p>
+                
+                <!-- Custom Toggle -->
+                <div class="flex items-center justify-center mt-8 gap-3">
+                    <span class="text-sm text-zinc-400">Monthly</span>
+                    <div class="relative inline-block w-10 mr-2 align-middle select-none transition duration-200 ease-in">
+                        <input type="checkbox" name="toggle" id="toggle" class="toggle-checkbox absolute block w-5 h-5 rounded-full bg-white border-4 border-zinc-700 appearance-none cursor-pointer transition-all duration-300">
+                        <label for="toggle" class="toggle-label block overflow-hidden h-5 rounded-full bg-zinc-800 cursor-pointer border border-zinc-700"></label>
+                    </div>
+                    <span class="text-sm text-white">Yearly <span class="text-xs text-blue-400 ml-1 font-mono">(-20%)</span></span>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+                <!-- Plan 1 -->
+                <div class="border border-zinc-800 bg-zinc-900/50 rounded-xl p-8 flex flex-col reveal delay-100">
+                    <div class="mb-4">
+                        <h3 class="font-mono text-lg text-white">DEV</h3>
+                        <p class="text-xs text-zinc-500 mt-1">For prototyping.</p>
+                    </div>
+                    <div class="mb-6">
+                        <span class="text-4xl font-medium text-white">$0</span>
+                        <span class="text-zinc-500">/mo</span>
+                    </div>
+                    <ul class="space-y-3 mb-8 flex-1">
+                        <li class="flex items-center gap-3 text-sm text-zinc-300">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="check" class="lucide lucide-check w-4 h-4 text-blue-500"><path d="M20 6 9 17l-5-5"></path></svg> 10k Tokens/mo
+                        </li>
+                        <li class="flex items-center gap-3 text-sm text-zinc-300">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="check" class="lucide lucide-check w-4 h-4 text-blue-500"><path d="M20 6 9 17l-5-5"></path></svg> 2 Concurrent Requests
+                        </li>
+                        <li class="flex items-center gap-3 text-sm text-zinc-300">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="check" class="lucide lucide-check w-4 h-4 text-blue-500"><path d="M20 6 9 17l-5-5"></path></svg> Community Support
+                        </li>
+                    </ul>
+                    <button class="w-full py-2 border border-zinc-700 text-zinc-300 hover:bg-zinc-800 hover:text-white transition-colors text-sm font-mono">START FREE</button>
+                </div>
+
+                <!-- Plan 2 (Featured) -->
+                <div class="border border-blue-500/30 bg-zinc-900/80 rounded-xl p-8 flex flex-col relative shadow-[0_0_30px_-10px_rgba(59,130,246,0.15)] reveal">
+                    <div class="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-blue-600 text-white text-[10px] font-mono px-3 py-0.5 rounded-full uppercase tracking-wide">
+                        Most Popular
+                    </div>
+                    <div class="mb-4">
+                        <h3 class="font-mono text-lg text-white">PRO</h3>
+                        <p class="text-xs text-zinc-500 mt-1">For production apps.</p>
+                    </div>
+                    <div class="mb-6">
+                        <span class="text-4xl font-medium text-white">$49</span>
+                        <span class="text-zinc-500">/mo</span>
+                    </div>
+                    <ul class="space-y-3 mb-8 flex-1">
+                        <li class="flex items-center gap-3 text-sm text-zinc-300">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="check" class="lucide lucide-check w-4 h-4 text-blue-500"><path d="M20 6 9 17l-5-5"></path></svg> 2M Tokens/mo
+                        </li>
+                        <li class="flex items-center gap-3 text-sm text-zinc-300">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="check" class="lucide lucide-check w-4 h-4 text-blue-500"><path d="M20 6 9 17l-5-5"></path></svg> 100 Concurrent Requests
+                        </li>
+                        <li class="flex items-center gap-3 text-sm text-zinc-300">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="check" class="lucide lucide-check w-4 h-4 text-blue-500"><path d="M20 6 9 17l-5-5"></path></svg> Semantic Routing
+                        </li>
+                        
+                    </ul>
+                    <button class="w-full py-2 bg-blue-600 text-white hover:bg-blue-500 transition-colors text-sm font-mono shadow-md">SUBSCRIBE</button>
+                </div>
+
+                <!-- Plan 3 -->
+                <div class="border border-zinc-800 bg-zinc-900/50 rounded-xl p-8 flex flex-col reveal delay-200">
+                    <div class="mb-4">
+                        <h3 class="font-mono text-lg text-white">ENTERPRISE</h3>
+                        <p class="text-xs text-zinc-500 mt-1">For large scale.</p>
+                    </div>
+                    <div class="mb-6">
+                        <span class="text-4xl font-medium text-white">Custom</span>
+                    </div>
+                    <ul class="space-y-3 mb-8 flex-1">
+                        <li class="flex items-center gap-3 text-sm text-zinc-300">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="check" class="lucide lucide-check w-4 h-4 text-blue-500"><path d="M20 6 9 17l-5-5"></path></svg> Unlimited Tokens
+                        </li>
+                        <li class="flex items-center gap-3 text-sm text-zinc-300">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="check" class="lucide lucide-check w-4 h-4 text-blue-500"><path d="M20 6 9 17l-5-5"></path></svg> Dedicated VPC
+                        </li>
+                        <li class="flex items-center gap-3 text-sm text-zinc-300">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="check" class="lucide lucide-check w-4 h-4 text-blue-500"><path d="M20 6 9 17l-5-5"></path></svg> Fine-tuning
+                        </li>
+                         
+                    </ul>
+                    <button class="w-full py-2 border border-zinc-700 text-zinc-300 hover:bg-zinc-800 hover:text-white transition-colors text-sm font-mono">CONTACT SALES</button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- New CTA Section -->
+    <section class="py-24 relative overflow-hidden bg-zinc-950">
+        <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-blue-600/20 rounded-full blur-[120px] pointer-events-none mix-blend-screen"></div>
+        <div class="max-w-4xl mx-auto px-6 relative z-10 text-center reveal">
+            <h2 class="text-4xl md:text-6xl font-mono font-medium tracking-tight text-white mb-6">
+                READY TO ACCELERATE?
+            </h2>
+            <p class="text-xl text-zinc-400 mb-10 font-light">
+                Join the thousands of developers processing billions of tokens daily on NeuralGrid.
+            </p>
+            <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
+                <button class="w-full sm:w-auto bg-white hover:bg-zinc-200 text-zinc-950 px-8 py-4 text-sm font-mono font-bold transition-all">
+                    START DEPLOYING NOW
+                </button>
+                <button class="w-full sm:w-auto bg-transparent hover:bg-zinc-900 text-white border border-zinc-700 px-8 py-4 text-sm font-mono transition-all">
+                    READ THE DOCS
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-zinc-950 border-t border-zinc-900 pt-20 pb-10">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-10 mb-20">
+                <div class="col-span-2 md:col-span-1">
+                    <div class="flex items-center gap-2 mb-6">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" data-lucide="cpu" class="lucide lucide-cpu w-5 h-5 text-blue-500"><path d="M12 20v2"></path><path d="M12 2v2"></path><path d="M17 20v2"></path><path d="M17 2v2"></path><path d="M2 12h2"></path><path d="M2 17h2"></path><path d="M2 7h2"></path><path d="M20 12h2"></path><path d="M20 17h2"></path><path d="M20 7h2"></path><path d="M7 20v2"></path><path d="M7 2v2"></path><rect x="4" y="4" width="16" height="16" rx="2"></rect><rect x="8" y="8" width="8" height="8" rx="1"></rect></svg>
+                        <span class="font-mono font-medium tracking-tight text-white">NEURALGRID</span>
+                    </div>
+                    <p class="text-sm text-zinc-500">The inference layer for the autonomous web.</p>
+                </div>
+                <div>
+                    <h4 class="font-mono text-sm text-white mb-6">PRODUCT</h4>
+                    <ul class="space-y-4 text-sm text-zinc-500">
+                        <li><a href="#" class="hover:text-blue-500 transition-colors">Changelog</a></li>
+                        <li><a href="#" class="hover:text-blue-500 transition-colors">Documentation</a></li>
+                        <li><a href="#" class="hover:text-blue-500 transition-colors">Integrations</a></li>
+                        
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="font-mono text-sm text-white mb-6">COMPANY</h4>
+                    <ul class="space-y-4 text-sm text-zinc-500">
+                        <li><a href="#" class="hover:text-blue-500 transition-colors">About</a></li>
+                        <li><a href="#" class="hover:text-blue-500 transition-colors">Blog</a></li>
+                        <li><a href="#" class="hover:text-blue-500 transition-colors">Careers</a></li>
+                        
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="font-mono text-sm text-white mb-6">LEGAL</h4>
+                    <ul class="space-y-4 text-sm text-zinc-500">
+                        <li><a href="#" class="hover:text-blue-500 transition-colors">Privacy</a></li>
+                        <li><a href="#" class="hover:text-blue-500 transition-colors">Terms</a></li>
+                        <li><a href="#" class="hover:text-blue-500 transition-colors">Security</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="flex flex-col md:flex-row justify-between items-center border-t border-zinc-900 pt-8 gap-4">
+                <p class="text-xs text-zinc-600 font-mono">© 2024 NEURALGRID INC. ALL RIGHTS RESERVED.</p>
+                <div class="flex gap-6">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="github" class="lucide lucide-github w-4 h-4 text-zinc-600 hover:text-white cursor-pointer transition-colors"><path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4"></path><path d="M9 18c-4.51 2-5-2-7-2"></path></svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="twitter" class="lucide lucide-twitter w-4 h-4 text-zinc-600 hover:text-white cursor-pointer transition-colors"><path d="M22 4s-.7 2.1-2 3.4c1.6 10-9.4 17.3-18 11.6 2.2.1 4.4-.6 6-2C3 15.5.5 9.6 3 5c2.2 2.6 5.6 4.1 9 4-.9-4.2 4-6.6 7-3.8 1.1 0 3-1.2 3-1.2z"></path></svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="linkedin" class="lucide lucide-linkedin w-4 h-4 text-zinc-600 hover:text-white cursor-pointer transition-colors"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path><rect width="4" height="12" x="2" y="9"></rect><circle cx="4" cy="4" r="2"></circle></svg>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Scripts -->
+    <script>
+        // Initialize Icons
+        lucide.createIcons();
+
+        // Observer for fade/slide animations
+        const observerOptions = {
+            root: null,
+            rootMargin: '0px',
+            threshold: 0.1
+        };
+
+        const observer = new IntersectionObserver((entries, observer) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('active');
+                    observer.unobserve(entry.target);
+                }
+            });
+        }, observerOptions);
+
+        document.querySelectorAll('.reveal').forEach(el => {
+            observer.observe(el);
+        });
+    </script>
+
+</body></html>
